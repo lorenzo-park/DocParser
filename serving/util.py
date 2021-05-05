@@ -59,8 +59,8 @@ def make_serving_ready(model_path, save_serve_path, version_number):
         input_image_meta = g.get_tensor_by_name("input_image_meta:0")
         input_anchors = g.get_tensor_by_name("input_anchors:0")
 
-        output_detection = g.get_tensor_by_name("mrcnn_detection/Reshape_1:0")
-        output_mask = g.get_tensor_by_name("mrcnn_mask/Reshape_1:0")
+        output_detection = g.get_tensor_by_name(f"{OUTPUT_DETECTION}:0")
+        output_mask = g.get_tensor_by_name(f"{OUTPUT_MASK}:0")
 
         sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
             tf.saved_model.signature_def_utils.predict_signature_def(
