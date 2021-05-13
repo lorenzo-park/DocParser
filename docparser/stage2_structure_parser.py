@@ -9,7 +9,7 @@ from docparser.objdetmetrics_lib.BoundingBox import BoundingBox
 from docparser.objdetmetrics_lib.BoundingBoxes import getBoundingBoxesForFile, getBoundingBoxesForList
 from docparser.objdetmetrics_lib.utils import BBFormat
 
-logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logging.conf'))
+logging.config.fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging.conf'))
 logger = logging.getLogger(__name__)
 
 from docparser.utils.data_utils import create_dir_if_not_exists, DocsDataset
