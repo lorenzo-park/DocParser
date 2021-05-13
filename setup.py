@@ -1,10 +1,12 @@
 from setuptools import setup
-from pip.req import parse_requirements
+
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setup(name='docparser',
       version='0.1',
       description='DocParser',
       license='MIT',
       packages=['docparser', 'docparser.utils', 'docparser.objdetmetrics_lib'],
-      install_reqs=parse_requirements('requirements_gpu.txt', session='hack'),
+      install_requires=required,
       zip_safe=False)
