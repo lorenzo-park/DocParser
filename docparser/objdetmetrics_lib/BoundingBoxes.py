@@ -253,3 +253,48 @@ def getBoundingBoxesForFile(filepath,
             allClasses.append(idClass)
     fh1.close()
     return allBoundingBoxes, allClasses
+
+
+def getBoundingBoxesForList(output,
+                            bbFormat,
+                            coordType,
+                            allBoundingBoxes=None,
+                            allClasses=None):
+    """Read outputs containing bounding boxes (ground truth and detections)."""
+
+    if allBoundingBoxes is None:
+        allBoundingBoxes = BoundingBoxes()
+    if allClasses is None:
+        allClasses = []
+    height = output["orig_img_shape"][0]
+    width = output["orig_img_shape"][1]
+    depth = output["orig_img_shape"][2]
+    imgSize = (width, height)
+
+    for item in output["prediction_list"]:
+        # idClass = int(splitLine[0]) #class
+        ann_id = item["pred_nr"]
+        idClass = (item["class_name"])  # class
+        confidence = item["pred_score"]
+        y1, x1, y2, x2 = item["bbox_orig_coords"]
+        x = float(x1)
+        y = float(y1)
+        w = float(x2)
+        h = float(y2)
+        bb = BoundingBox(
+            "",
+            idClass,
+            x,
+            y,
+            w,
+            h,
+            coordType,
+            imgSize,
+            BBType.Detected,
+            confidence,
+            format=bbFormat,
+            bbox_id=ann_id)
+        allBoundingBoxes.addBoundingBox(bb)
+        if idClass not in allClasses:
+            allClasses.append(idClass)
+    return allBoundingBoxes, allClasses

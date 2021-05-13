@@ -6,7 +6,7 @@ from shutil import copyfile
 
 from docparser.objdetmetrics_lib import Evaluator
 from docparser.objdetmetrics_lib.BoundingBox import BoundingBox
-from docparser.objdetmetrics_lib.BoundingBoxes import getBoundingBoxesForFile
+from docparser.objdetmetrics_lib.BoundingBoxes import getBoundingBoxesForFile, getBoundingBoxesForList
 from docparser.objdetmetrics_lib.utils import BBFormat
 
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logging.conf'))
@@ -266,6 +266,75 @@ class StructureParser(object):
             img_relations_dict = {'relations': is_parent_relations + sequence_relations,
                                   'flat_annotations': flat_annotations, 'all_bboxes': all_bboxes_for_img}
             return img_relations_dict
+
+    def create_structure_for_doc_from_list(self, output, do_postprocessing=False):
+        allBoundingBoxes, _ = getBoundingBoxesForList(output, bbFormat=BBFormat.XYX2Y2,
+                                                        coordType='abs')
+        img_names = sorted(allBoundingBoxes.getBoundingBoxImageNames())
+        try:
+            img_name = img_names[0]
+        except IndexError as e:
+            logger.warning(
+                "No image names exist for detection file: {} \nReturning empty structure, as no objects were detected".format(
+                    detection_result_file))
+            img_relations_dict = {'relations': [], 'flat_annotations': None, 'all_bboxes': []}
+            return img_relations_dict
+        assert len(img_names) == 1
+        all_bboxes_for_img = allBoundingBoxes.getBoundingBoxesByImageName(img_name)
+        all_ids_for_img = [x.getBboxID() for x in all_bboxes_for_img]
+        logger.debug('creating structure for current img: {}'.format(img_name))
+        max_loop_count = 30
+        loop_count = 0
+        if do_postprocessing:
+            updated_bboxes = True
+            while (updated_bboxes is True):
+                loop_count += 1
+
+                # TODO refactor to avoid repeated fetching of currently detected relations
+
+                # try:
+                is_parent_relations, sequence_relations, meta_bboxes_for_img, invalid_toplevel_bboxes = generate_relations_for_image(
+                    all_bboxes_for_img,
+                    enforce_hierarchy=False)  # also allow bad parent-child relations to be generated such that they can be potentially fixed
+                #                    except NotImplementedError: #sometimes, cycles for
+                #                        is_parent_relations, sequence_relations, meta_bboxes_for_img, invalid_toplevel_bboxes = generate_relations_for_image(
+                #                            all_bboxes_for_img, enforce_hierarchy=True) #also allow bad parent-child relations to be generated such that they can be potentially fixed
+
+                if loop_count > max_loop_count:
+                    logger.debug("Exited postprocessing, because maximum loop count reached")
+                    break
+                updated_bboxes, all_bboxes_for_img = self.align_parents_and_children(all_bboxes_for_img,
+                                                                                        is_parent_relations)
+                if updated_bboxes:
+                    continue
+
+                updated_bboxes, all_bboxes_for_img = self.merged_direct_nesting_of_same_category(all_bboxes_for_img,
+                                                                                                    is_parent_relations)
+                if updated_bboxes:
+                    continue
+
+                updated_bboxes, all_bboxes_for_img = self.wrap_invalid_children(all_bboxes_for_img,
+                                                                                is_parent_relations,
+                                                                                all_ids_for_img)
+                if updated_bboxes:
+                    continue
+                updated_bboxes, all_bboxes_for_img = self.wrap_invalid_toplevel_bboxes(all_bboxes_for_img,
+                                                                                        invalid_toplevel_bboxes,
+                                                                                        sequence_relations,
+                                                                                        is_parent_relations)
+                if updated_bboxes:
+                    continue
+
+                # TODO, optional: after grouping columns, align/expand all grouped annotations horizontally
+                # TODO, optional: Merge consecutive, overlapping content boxes in same column (per definition, they should only be one bbox)
+        is_parent_relations, sequence_relations, meta_bboxes_for_img, invalid_toplevel_bboxes = generate_relations_for_image(
+            all_bboxes_for_img)
+
+        flat_annotations = create_flat_annotation_list(all_bboxes_for_img, meta_bboxes_for_img, is_parent_relations,
+                                                        sequence_relations)
+        img_relations_dict = {'relations': is_parent_relations + sequence_relations,
+                                'flat_annotations': flat_annotations, 'all_bboxes': all_bboxes_for_img}
+        return img_relations_dict
 
     def align_parents_and_children(self, all_bboxes_for_img, is_parent_relations):
         children_by_parent = defaultdict(set)
