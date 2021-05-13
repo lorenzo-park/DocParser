@@ -12,6 +12,7 @@ setup(name='docparser',
       description='DocParser',
       license='MIT',
       packages=['docparser', 'docparser.utils', 'docparser.objdetmetrics_lib'],
-      data_files=[('docparser', ['docparser/logging.conf'])],
+      package_data={"docparser":"*.conf"},
+      include_package_data=True,
       install_reqs=parse_requirements('requirements.txt', session='hack'),
       zip_safe=False)
