@@ -1,12 +1,10 @@
 from setuptools import setup
-
-with open('requirements.txt') as f:
-    required = f.read().splitlines()
+from pip.req import parse_requirements
 
 setup(name='docparser',
       version='0.1',
       description='DocParser',
       license='MIT',
       packages=['docparser', 'docparser.utils', 'docparser.objdetmetrics_lib'],
-      install_requires=required,
+      install_reqs=parse_requirements('requirements.txt', session='hack'),
       zip_safe=False)
