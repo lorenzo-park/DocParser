@@ -6,7 +6,7 @@ import mrcnn.model as modellib
 from docparser.utils.data_utils import DocsDataset
 from docparser.utils.experiment_utils import DocparserDefaultConfig, TimeHistory
 
-logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logging.conf'))
+logging.config.fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging.conf'))
 logger = logging.getLogger(__name__)
 
 
